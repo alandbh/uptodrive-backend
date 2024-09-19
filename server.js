@@ -6,6 +6,7 @@ const fs = require("fs");
 var path = require("path");
 // import path from "path";
 const cors = require("cors");
+const getfilelist = require("./getfilelist");
 
 // Configurações do Google Drive
 
@@ -13,7 +14,14 @@ const FOLDER_ID = process.env.FOLDER_ID;
 const CLIENT_EMAIL = process.env.CLIENT_EMAIL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
-const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
+const SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive",
+];
+
+function getExt(filename) {
+    return filename.split(".").pop();
+}
 
 /**
  * Authorize with service account and get jwt client
@@ -50,9 +58,8 @@ app.use(cors());
 app.post("/upload", upload.single("file"), async (req, res) => {
     const filePath = path.join(uploadFolder, req.file.filename);
 
-    // console.log("CUSTOM", req.body.customName);
-
-    // return;
+    const customName =
+        req.body.customName + "." + getExt(req.file.originalname);
 
     authorize()
         .then((authClient) => {
@@ -60,23 +67,19 @@ app.post("/upload", upload.single("file"), async (req, res) => {
                 authClient,
                 filePath,
                 req.file.originalname,
-                req.customname
-            );
+                customName
+            ).then((response) => res.json(response));
         })
         .catch(console.error);
 });
 
 // Exemplo de upload para o Google Drive
 async function uploadFile(authClient, filePath, fileName, customName) {
-    console.log("FILE_PATH", filePath);
-    console.log("FILE_NAME", fileName);
-    console.log("CUSTOM", customName);
-
     const drive = google.drive({ version: "v3", auth: authClient });
 
     const response = await drive.files.create({
         requestBody: {
-            name: fileName,
+            name: customName || fileName,
             mimeType: "application/octet-stream",
             parents: [FOLDER_ID],
         },
@@ -89,8 +92,12 @@ async function uploadFile(authClient, filePath, fileName, customName) {
     // Deleta o arquivo temporário após o upload
     fs.unlinkSync(filePath);
 
-    console.log(response.data);
-    listFiles(authClient);
+    // console.log(response.data);
+    const updatedFileList = await listFiles(authClient);
+    return {
+        uploadedFile: response.data,
+        updatedFileList,
+    };
 }
 
 /**
@@ -100,7 +107,7 @@ async function uploadFile(authClient, filePath, fileName, customName) {
 async function listFiles(authClient) {
     const drive = google.drive({ version: "v3", auth: authClient });
     const res = await drive.files.list({
-        pageSize: 10,
+        pageSize: 1000,
         fields: "nextPageToken, files(id, name)",
     });
     const files = res.data.files;
@@ -109,10 +116,79 @@ async function listFiles(authClient) {
         return;
     }
 
-    console.log("Files:");
-    files.map((file) => {
-        console.log(`${file.name} (${file.id})`);
-    });
+    return files;
+}
+
+app.get("/upload", async (req, res) => {
+    // const folderId = "1YEe9xlq56ycrajjPGiQ0Ia68y3e2C6lC";
+
+    const folderId = req.query.folder;
+
+    console.log({ folderId });
+    // return;
+
+    try {
+        const authClient = await authorize();
+        const response = await listFilesInFolder(authClient, folderId);
+        res.json(response);
+    } catch (error) {
+        console.log(error);
+        res.json({ error });
+    }
+
+    // authorize()
+    //     .then((authClient) => {
+    //         listFilesInFolder(authClient, folderId).then((response) =>
+    //             res.json(response)
+    //         );
+    //     })
+    //     .catch(console.error);
+});
+
+async function listFilesInFolder(authClient, folderId) {
+    // const folderId = "115JMYddkOBmE_yI9iKTu72UIM0A1EuII";
+
+    // const resource = {
+    //     auth: authClient,
+    //     id: folderId,
+    //     fields: "files(name,id)",
+    // };
+
+    // getfilelist.GetFileList(resource, function (err, res) {
+    //     // or getfilelist.GetFolderTree(resource, function(err, res) {
+    //     if (err) {
+    //         console.log(err);
+    //         return;
+    //     }
+    //     console.log(res);
+    // });
+
+    // return;
+
+    const drive = google.drive({ version: "v3", auth: authClient });
+
+    try {
+        const response = await drive.files.list({
+            q: `'${folderId}' in parents`, // Query para listar os arquivos da pasta
+            pageSize: 1000,
+            fields: "nextPageToken, files(id, name)", // Campos que você deseja listar
+        });
+
+        const files = response.data.files;
+        if (files.length) {
+            console.log("Files:");
+            files.map((file) => {
+                console.log(`${file.name} (${file.id})`);
+            });
+            return files;
+        } else {
+            console.log("No files found.");
+            return { response: "no files found" };
+        }
+    } catch (error) {
+        console.error("Error fetching files:", error.message);
+        return error;
+    }
 }
 
 // Middleware para servir arquivos estáticos na raiz do projeto
