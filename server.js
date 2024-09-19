@@ -135,14 +135,6 @@ app.get("/upload", async (req, res) => {
         console.log(error);
         res.json({ error });
     }
-
-    // authorize()
-    //     .then((authClient) => {
-    //         listFilesInFolder(authClient, folderId).then((response) =>
-    //             res.json(response)
-    //         );
-    //     })
-    //     .catch(console.error);
 });
 
 async function listFilesInFolder(authClient, folderId) {
