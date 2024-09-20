@@ -7,6 +7,7 @@ var path = require("path");
 // import path from "path";
 const cors = require("cors");
 const getfilelist = require("./getfilelist");
+const { listFoldersAndSubfolders } = require("./libs/driveFunctions");
 
 // Configurações do Google Drive
 
@@ -140,25 +141,6 @@ app.get("/upload", async (req, res) => {
 });
 
 async function listFilesInFolder(authClient, folderId) {
-    // const folderId = "115JMYddkOBmE_yI9iKTu72UIM0A1EuII";
-
-    // const resource = {
-    //     auth: authClient,
-    //     id: folderId,
-    //     fields: "files(name,id)",
-    // };
-
-    // getfilelist.GetFileList(resource, function (err, res) {
-    //     // or getfilelist.GetFolderTree(resource, function(err, res) {
-    //     if (err) {
-    //         console.log(err);
-    //         return;
-    //     }
-    //     console.log(res);
-    // });
-
-    // return;
-
     const drive = google.drive({ version: "v3", auth: authClient });
 
     try {
@@ -184,6 +166,26 @@ async function listFilesInFolder(authClient, folderId) {
         return error;
     }
 }
+
+app.get("/list", async (req, res) => {
+    // const folderId = req.query.folder;
+    const folderId = "1uyCze04kkeND_2lP2oxcnd4bXC4xXH4d";
+
+    // return;
+
+    try {
+        const authClient = await authorize();
+        // const response = await listFilesInFolder(authClient, folderId);
+        const response = await listFoldersAndSubfolders(authClient, folderId);
+        console.log(JSON.stringify(response, null, 2)); // Exibe o resultado formatado
+
+        res.json(response);
+    } catch (error) {
+        console.log("erro ao listar subpastas", error);
+        res.json({ message: "erro ao listar subpastas", error });
+    }
+});
+// Uso
 
 // Middleware para servir arquivos estáticos na raiz do projeto
 app.use(express.static(path.join(__dirname, "/")));
