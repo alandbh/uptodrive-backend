@@ -58,8 +58,10 @@ app.use(cors());
 app.post("/upload", upload.single("file"), async (req, res) => {
     const filePath = path.join(uploadFolder, req.file.filename);
 
-    const customName =
-        req.body.customName + "." + getExt(req.file.originalname);
+    const extension = req.body.extension || getExt(req.file.originalname);
+
+    const customName = req.body.customName + "." + extension;
+    console.log("customName", customName);
 
     authorize()
         .then((authClient) => {
