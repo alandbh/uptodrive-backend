@@ -1,6 +1,5 @@
 const { google } = require("googleapis");
 
-const FOLDER_ID = process.env.FOLDER_ID;
 const CLIENT_EMAIL = process.env.CLIENT_EMAIL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 

@@ -6,9 +6,9 @@ async function listFilesInFolder(authClient, folderId) {
 
     try {
         const response = await drive.files.list({
-            q: `'${folderId}' in parents`, // Query para listar os arquivos da pasta
+            q: `'${folderId}' in parents`, // Query string to list files in folder
             pageSize: 1000,
-            fields: "nextPageToken, files(id, name)", // Campos que você deseja listar
+            fields: "nextPageToken, files(id, name)", // Fields to show in results
         });
 
         const files = response.data.files;
@@ -30,25 +30,24 @@ async function listFilesInFolder(authClient, folderId) {
 
 async function listFoldersAndSubfolders(authClient, parentFolderId) {
     const drive = google.drive({ version: "v3", auth: authClient });
-    // Lista as pastas de primeiro nível
+    // List 1st level folders
     const firstLevelFolders = await drive.files.list({
-        q: `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder'`, // Filtra apenas pastas
+        q: `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder'`, // Query for folders only
         pageSize: 1000,
-        fields: "nextPageToken, files(id, name)", // Campos que você deseja listar
+        fields: "nextPageToken, files(id, name)",
     });
 
     const foldersAndSubfolders = [];
 
-    // Percorre cada pasta de primeiro nível
     for (const folder of firstLevelFolders.data.files) {
         const subfolderResponse = await drive.files.list({
-            q: `'${folder.id}' in parents and mimeType = 'application/vnd.google-apps.folder'`, // Lista as subpastas
+            q: `'${folder.id}' in parents and mimeType = 'application/vnd.google-apps.folder'`, // Query for subfolders
             pageSize: 1000,
-            fields: "nextPageToken, files(id, name)", // Campos que você deseja listar
+            fields: "nextPageToken, files(id, name)",
         });
 
         foldersAndSubfolders.push({
-            name: folder.name, // Nome da pasta de primeiro nível
+            name: folder.name, // Name of the 1st level folder
             id: folder.id,
             type: "player",
             subfolders: subfolderResponse.data.files.map((subfolder) => ({
@@ -62,7 +61,7 @@ async function listFoldersAndSubfolders(authClient, parentFolderId) {
     return foldersAndSubfolders;
 }
 
-// Exemplo de upload para o Google Drive
+// Send files to Google Drive
 async function uploadFile(
     authClient,
     folderId,

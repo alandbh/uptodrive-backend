@@ -45,30 +45,26 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         : req.file.originalname;
     console.log("customName", customName);
 
-    authorize()
-        .then((authClient) => {
-            uploadFile(
-                authClient,
-                folderId,
-                filePath,
-                req.file.originalname,
-                customName
-            ).then((response) => {
-                // delete the temporary file
-                fs.unlinkSync(filePath);
-                return res.json(response);
-            });
-        })
-        .catch(console.error);
+    try {
+        const authClient = await authorize();
+        const response = await uploadFile(
+            authClient,
+            folderId,
+            filePath,
+            req.file.originalname,
+            customName
+        );
+
+        fs.unlinkSync(filePath);
+        return res.json(response);
+    } catch (error) {
+        console.error(error);
+        return res.json({ error });
+    }
 });
 
 app.get("/files", async (req, res) => {
-    // const folderId = "1YEe9xlq56ycrajjPGiQ0Ia68y3e2C6lC";
-
     const folderId = req.query.folder;
-
-    console.log({ folderId });
-    // return;
 
     try {
         const authClient = await authorize();
@@ -90,26 +86,26 @@ app.get("/folders", async (req, res) => {
 
         res.json(response);
     } catch (error) {
-        console.log("erro ao listar subpastas", error);
-        res.json({ message: "erro ao listar subpastas", error });
+        console.log("error on listing folders", error);
+        res.json({ message: "error on listing folders", error });
     }
 });
 
-// Middleware para servir arquivos estáticos na raiz do projeto
+// Middleware ro serve static files in root folder
 app.use(express.static(path.join(__dirname, "/")));
 
-// Endpoint para testar o servidor
+// Endpoint for testing
 app.get("/ping", (req, res) => {
     res.send("Server is running");
 });
 
-// Servir a página principal (index.html) em qualquer rota que não for específica
+// Returns a json for any non specified route.
 app.get("*", (req, res) => {
     res.json({ server: "ok" });
     // res.sendFile(path.join(__dirname, "/index.html"));
 });
 
-// Inicia o servidor
+// Starts the server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
