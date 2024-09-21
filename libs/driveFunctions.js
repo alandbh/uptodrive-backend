@@ -20,7 +20,7 @@ async function listFilesInFolder(authClient, folderId) {
             return files;
         } else {
             console.log("No files found.");
-            return { response: "no files found" };
+            return [];
         }
     } catch (error) {
         console.error("Error fetching files:", error.message);
