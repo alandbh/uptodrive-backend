@@ -16,10 +16,20 @@ function getExt(filename) {
     return filename.split(".").pop();
 }
 
-// Caminho absoluto para a pasta de uploads
-const uploadFolder = path.join(__dirname, "uploads");
+// // Caminho absoluto para a pasta de uploads
+// const uploadFolder = path.join(__dirname, "/tmp");
 
-// Verifica se a pasta 'uploads' existe; se não, cria a pasta
+// // Verifica se a pasta 'uploads' existe; se não, cria a pasta
+// if (!fs.existsSync(uploadFolder)) {
+//     fs.mkdirSync(uploadFolder, { recursive: true });
+// }
+
+// // Configura o multer para armazenar arquivos nessa pasta
+// const upload = multer({ dest: uploadFolder });
+
+const uploadFolder = "/tmp"; // Diretório temporário correto no App Engine
+
+// Verifica se a pasta 'tmp' existe; se não, cria a pasta
 if (!fs.existsSync(uploadFolder)) {
     fs.mkdirSync(uploadFolder, { recursive: true });
 }
@@ -31,7 +41,11 @@ const upload = multer({ dest: uploadFolder });
 const app = express();
 
 // Ativa o CORS para todas as origens
-app.use(cors());
+app.use(
+    cors({
+        origin: "*",
+    })
+);
 
 app.post("/upload", upload.single("file"), async (req, res) => {
     const filePath = path.join(uploadFolder, req.file.filename);
