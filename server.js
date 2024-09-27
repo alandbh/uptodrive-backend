@@ -41,11 +41,7 @@ const upload = multer({ dest: uploadFolder });
 const app = express();
 
 // Ativa o CORS para todas as origens
-app.use(
-    cors({
-        origin: "*",
-    })
-);
+app.use(cors());
 
 app.post("/upload", upload.single("file"), async (req, res) => {
     const filePath = path.join(uploadFolder, req.file.filename);
