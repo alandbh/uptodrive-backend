@@ -35,10 +35,17 @@ if (!fs.existsSync(uploadFolder)) {
 }
 
 // Configura o multer para armazenar arquivos nessa pasta
-const upload = multer({ dest: uploadFolder });
+const upload = multer({
+    dest: uploadFolder,
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+});
 
 // Inicializa o servidor Express
 const app = express();
+
+// Aumenta o limite de tamanho para o JSON e dados de formulário
+app.use(express.json({ limit: "500mb" }));
+app.use(express.urlencoded({ limit: "500mb", extended: true }));
 
 // Ativa o CORS para todas as origens
 app.use(cors());
