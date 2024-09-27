@@ -16,7 +16,7 @@
     "scripts": {
         "start": "node server.js",
         "dev": "nodemon server.js",
-        "tunnel": "node server.js & ssh -R uptodrive:80:localhost:4000 serveo.net"
+        "tunnel": "node server.js & lt -s uptodrive -p 4000"
     },
     "author": "",
     "license": "ISC",
